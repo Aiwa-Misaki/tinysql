@@ -166,6 +166,23 @@ func DecodeIndexKeyPrefix(key kv.Key) (tableID int64, indexID int64, indexValues
 	 *   5. understanding the coding rules is a prerequisite for implementing this function,
 	 *      you can learn it in the projection 1-2 course documentation.
 	 */
+	if !key.HasPrefix(tablePrefix) {
+		return 0, 0, nil, errInvalidIndexKey.GenWithStack("invalid key: error tablePrefix")
+	}
+	key = key[len(tablePrefix):]             // 删去prefix
+	key, tableID, err = codec.DecodeInt(key) // 得到tableID
+	if err != nil {
+		return 0, 0, nil, errInvalidIndexKey.GenWithStack("invalid key: error tableID")
+	}
+	if !key.HasPrefix(indexPrefixSep) {
+		return 0, 0, nil, errInvalidIndexKey.GenWithStack("invalid key: error indexPrefixSep")
+	}
+	key = key[len(indexPrefixSep):]                  // 删去prefix
+	indexValues, indexID, err = codec.DecodeInt(key) // 得到indexID，剩下的就是indexValues数组
+	if err != nil {
+		return 0, 0, nil, errInvalidIndexKey.GenWithStack("invalid key: error tableID")
+	}
+
 	return tableID, indexID, indexValues, nil
 }
 
